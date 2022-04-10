@@ -2,27 +2,36 @@
  * @Date: 2022-03-13 03:38:38
  * @LastEditors: Enda Cai
  * @E-mail: EndaCai@qq.com
- * @LastEditTime: 2022-03-15 23:52:03
+ * @LastEditTime: 2022-04-11 01:01:38
  * @FilePath: /HomekitOutlet-for-Xiaocong/src/main.cpp
  */
 #include <Arduino.h>
 #include <arduino_homekit_server.h>
-#include "wifi_info.h"
+// #include "wifi_info.h"
 #include "main.h"
 #include "ESPButton.h"
+#include <ESP8266WiFi.h>
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
 
 #define LOG_D(fmt, ...)   printf_P(PSTR(fmt "\n") , ##__VA_ARGS__);
 
+extern DNSServer dnsServer;
+extern ESP8266WebServer server;
+extern void wifiConfigInitBasic(void);
+extern void wifiConfigConnectWifi(void);
 void setup() {
-	Serial.begin(115200);
+	wifiConfigInitBasic();
     hardware_init();
-	wifi_connect(); // in wifi_info.h
+	wifiConfigConnectWifi();
     // digitalWrite(PIN_LED_RED, LOW);
 	//homekit_storage_reset(); // to remove the previous HomeKit pairing storage when you first run this new HomeKit example
 	my_homekit_setup();
 }
 
 void loop() {
+    server.handleClient();
+    dnsServer.processNextRequest();
     ESPButton.loop();
 	my_homekit_loop();
 	delay(10);
