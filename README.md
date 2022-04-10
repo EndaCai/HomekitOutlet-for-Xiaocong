@@ -1,8 +1,8 @@
 # HomekitOutlet-for-Xiaocong
 ## pinCode:123-11-123
 ## LED灯效：
-橙：Wi-Fi未连接、Homekit未配对  
-红：Wi-Fi未连接、Homekit已配对、插座打开
+橙：Wi-Fi未连接、Homekit未配对    
+红：Wi-Fi未连接、Homekit已配对、插座打开  
 绿：Wi-Fi已连接、Homkit已配对、插座打开  
 灭：Wi-Fi已连接、Homkit已配对、插座关闭  
 
