@@ -2,18 +2,56 @@
  * @Date: 2022-04-11 00:38:00
  * @LastEditors: Enda Cai
  * @E-mail: EndaCai@qq.com
- * @LastEditTime: 2022-04-11 01:25:26
+ * @LastEditTime: 2022-04-20 02:47:07
  * @FilePath: /HomekitOutlet-for-Xiaocong/src/wifiConfig.cpp
  */
 #include "main.h"
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
+#include <EEPROM.h> //导入Flash库文件
 
 const char* AP_NAME = "Smart Plug";//softAP wifi name
 
 char sta_ssid[32] = {0};
 char sta_password[64] = {0};
+
+String ssid;
+String psw;
+struct config_type
+{
+  char stassid[32];//定义配网得到的WIFI名长度(最大32字节)
+  char stapsw[64];//定义配网得到的WIFI密码长度(最大64字节)
+};
+
+struct config_type wifi_config_rom;
+
+void saveConfig()//保存函数
+{
+ EEPROM.begin(1024);//向系统申请1024kb ROM
+ //开始写入
+ uint8_t *p = (uint8_t*)(&wifi_config_rom);
+  for (int i = 0; i < sizeof(wifi_config_rom); i++)
+  {
+    EEPROM.write(i, *(p + i)); //在闪存内模拟写入
+  }
+  EEPROM.commit();//执行写入ROM
+}
+
+void loadConfig()//读取函数
+{
+  EEPROM.begin(1024);
+  uint8_t *p = (uint8_t*)(&wifi_config_rom);
+  for (int i = 0; i < sizeof(wifi_config_rom); i++)
+  {
+    *(p + i) = EEPROM.read(i);
+  }
+  EEPROM.commit();
+  ssid = wifi_config_rom.stassid;
+  psw = wifi_config_rom.stapsw;
+}
+
+
 //web code
 const char* page_html = "\
 <!DOCTYPE html>\r\n\
@@ -50,8 +88,8 @@ void handleRootPost() {//Post回调函数
   Serial.println("handleRootPost");
   if (server.hasArg("ssid")) {//判断是否有账号参数
     Serial.print("got ssid:");
-    strcpy(sta_ssid, server.arg("ssid").c_str());//将账号参数拷贝到sta_ssid中
-    Serial.println(sta_ssid);
+    strcpy(wifi_config_rom.stassid, server.arg("ssid").c_str());//将账号参数拷贝到sta_ssid中
+    Serial.println(wifi_config_rom.stassid);
   } else {//没有参数
     Serial.println("error, not found ssid");
     server.send(200, "text/html", "<meta charset='UTF-8'>error, not found ssid");//返回错误页面
@@ -60,8 +98,8 @@ void handleRootPost() {//Post回调函数
   //密码与账号同理
   if (server.hasArg("password")) {
     Serial.print("got password:");
-    strcpy(sta_password, server.arg("password").c_str());
-    Serial.println(sta_password);
+    strcpy(wifi_config_rom.stapsw, server.arg("password").c_str());
+    Serial.println(wifi_config_rom.stapsw);
   } else {
     Serial.println("error, not found password");
     server.send(200, "text/html", "<meta charset='UTF-8'>error, not found password");
@@ -70,6 +108,8 @@ void handleRootPost() {//Post回调函数
 
   server.send(200, "text/html", "<meta charset='UTF-8'>保存成功");//返回保存成功页面
   delay(2000);
+  //Save wifi config
+  saveConfig();//调用保存函数
   //连接wifi
   wifiConfigConnectWifi();
 }
@@ -105,24 +145,40 @@ void wifiConfigInitDNS(void){//初始化DNS服务器
 }
 
 void wifiConfigConnectWifi(void){
-  WiFi.mode(WIFI_STA);//切换为STA模式
-  WiFi.setAutoConnect(true);//设置自动连接
-  WiFi.begin(sta_ssid,sta_password);//连接上一次连接成功的wifi
-  Serial.println("");
-  Serial.print("Connecting to wifi");
-  int count = 0;
-   while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    count++;
-    if(count > 10){//如果10秒内没有连上，就开启Web配网 可适当调整这个时间
-      wifiConfigInitSoftAP();
-      initWebServer();
-      wifiConfigInitDNS();
-      Serial.println("Failed to connect config Wi-Fi, convert to SoftAP.");
-      break;//跳出 防止无限初始化
-    }
-    Serial.print(".");
+  if(!WiFi.mode(WIFI_STA)) {//切换为STA模式
+    Serial.println("Conver to STA failed");
   }
+  WiFi.setAutoConnect(true);//设置自动连接
+  loadConfig();//读取ROM是否包含密码
+  if(ssid!=0 && psw!=0){
+    Serial.printf("ssid:%s ; psw:%s \r\n",ssid,psw);
+    WiFi.begin(ssid, psw);//如果有密码则自动连接
+    Serial.println("");
+    Serial.print("Connecting to wifi");
+    int count = 0;
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(1000);
+      count++;
+      if(count > 10){//如果10秒内没有连上，就开启Web配网 可适当调整这个时间
+        wifiConfigInitSoftAP();
+        initWebServer();
+        wifiConfigInitDNS();
+        Serial.println("Failed to connect config Wi-Fi, convert to SoftAP.");
+        break;//跳出 防止无限初始化
+      }
+      Serial.print(".");
+      Serial.printf("ssid:%s ; psw:%s \r\n",ssid,psw);
+    }
+  }
+  else{
+    Serial.println("No saved wifi config");
+    wifiConfigInitSoftAP();
+    initWebServer();
+    wifiConfigInitDNS();
+  }
+  
+  // WiFi.begin();//连接上一次连接成功的wifi
+
   Serial.println("");
   if(WiFi.status() == WL_CONNECTED){//如果连接上 就输出IP信息 防止未连接上break后会误输出
     Serial.println("WIFI Connected!");

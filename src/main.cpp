@@ -2,7 +2,7 @@
  * @Date: 2022-03-13 03:38:38
  * @LastEditors: Enda Cai
  * @E-mail: EndaCai@qq.com
- * @LastEditTime: 2022-04-11 01:01:38
+ * @LastEditTime: 2022-04-20 01:36:04
  * @FilePath: /HomekitOutlet-for-Xiaocong/src/main.cpp
  */
 #include <Arduino.h>
@@ -13,6 +13,7 @@
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
+#include <EEPROM.h> //导入Flash库文件
 
 #define LOG_D(fmt, ...)   printf_P(PSTR(fmt "\n") , ##__VA_ARGS__);
 
@@ -24,7 +25,7 @@ void setup() {
 	wifiConfigInitBasic();
     hardware_init();
 	wifiConfigConnectWifi();
-    // digitalWrite(PIN_LED_RED, LOW);
+    digitalWrite(PIN_LED_RED, LOW);
 	//homekit_storage_reset(); // to remove the previous HomeKit pairing storage when you first run this new HomeKit example
 	my_homekit_setup();
 }
