@@ -2,7 +2,7 @@
  * @Date: 2022-03-13 03:38:38
  * @LastEditors: Enda Cai
  * @E-mail: EndaCai@qq.com
- * @LastEditTime: 2022-04-20 01:36:04
+ * @LastEditTime: 2022-04-22 00:22:19
  * @FilePath: /HomekitOutlet-for-Xiaocong/src/main.cpp
  */
 #include <Arduino.h>
@@ -25,7 +25,7 @@ void setup() {
 	wifiConfigInitBasic();
     hardware_init();
 	wifiConfigConnectWifi();
-    digitalWrite(PIN_LED_RED, LOW);
+    digitalWrite(PIN_LED_RED, HIGH);
 	//homekit_storage_reset(); // to remove the previous HomeKit pairing storage when you first run this new HomeKit example
 	my_homekit_setup();
 }
@@ -81,6 +81,9 @@ void hardware_init()
     pinMode(PIN_BUTTON, INPUT_PULLUP);
     pinMode(PIN_LED_GREEN, OUTPUT);
     pinMode(PIN_LED_RED, OUTPUT);
+    digitalWrite(PIN_LED_GREEN, LOW); //Init 
+    digitalWrite(PIN_LED_RED, LOW); //Init 
+    
 
     ESPButton.add(1, PIN_BUTTON, false);
     ESPButton.setCallback(button_progcess_cb);

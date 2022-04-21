@@ -2,7 +2,7 @@
  * @Date: 2022-04-11 00:38:00
  * @LastEditors: Enda Cai
  * @E-mail: EndaCai@qq.com
- * @LastEditTime: 2022-04-20 02:47:07
+ * @LastEditTime: 2022-04-22 00:29:45
  * @FilePath: /HomekitOutlet-for-Xiaocong/src/wifiConfig.cpp
  */
 #include "main.h"
@@ -155,6 +155,7 @@ void wifiConfigConnectWifi(void){
     WiFi.begin(ssid, psw);//如果有密码则自动连接
     Serial.println("");
     Serial.print("Connecting to wifi");
+    digitalWrite(PIN_LED_RED, LOW);
     int count = 0;
     while (WiFi.status() != WL_CONNECTED) {
       delay(1000);
@@ -167,7 +168,6 @@ void wifiConfigConnectWifi(void){
         break;//跳出 防止无限初始化
       }
       Serial.print(".");
-      Serial.printf("ssid:%s ; psw:%s \r\n",ssid,psw);
     }
   }
   else{
@@ -175,6 +175,8 @@ void wifiConfigConnectWifi(void){
     wifiConfigInitSoftAP();
     initWebServer();
     wifiConfigInitDNS();
+    digitalWrite(PIN_LED_GREEN, LOW); //Init 
+    digitalWrite(PIN_LED_RED, LOW); //Init 
   }
   
   // WiFi.begin();//连接上一次连接成功的wifi
@@ -185,6 +187,6 @@ void wifiConfigConnectWifi(void){
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());//打印esp8266的IP地址
     server.stop();
+    digitalWrite(PIN_LED_RED, HIGH);
   }
-  digitalWrite(PIN_LED_RED, HIGH);
 }
